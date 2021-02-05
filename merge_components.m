@@ -94,7 +94,7 @@ end
 A_merged = zeros(d,nm);
 C_merged = zeros(nm,T);
 S_merged = zeros(nm,T);
-if strcmpi(options.deconv_method,'constrained_foopsi')
+if strcmpi(options.deconv_method,'constrained_foopsi') || strcmpi(options.deconv_method,'MCEM_foopsi')
     P_merged.gn = cell(nm,1);
     P_merged.b = cell(nm,1);
     P_merged.c1 = cell(nm,1);
