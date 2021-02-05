@@ -400,3 +400,11 @@ YrA = AY - AA*C;
 f = C(K+1:end,:);
 C = C(1:K,:);
 YrA = YrA(1:K,:);
+
+
+if strcmpi(method, 'MCMC')
+        if isfield(P,'b'); P.b = P.b'; end
+        if isfield(P,'gn'); P.gn = P.gn'; end
+        if isfield(P,'c1'); P.c1 = P.c1'; end    
+        if isfield(P,'neuron_sn'); P.neuron_sn = P.neuron_sn'; end
+end
