@@ -21,7 +21,7 @@ function [O,lo] = update_order_greedy(A)
            end           
        end
        if cont
-           O{length(O)+1} = j;
+           O{length(O)+1} = i;
            lo = [lo,1];
        end
     end    
