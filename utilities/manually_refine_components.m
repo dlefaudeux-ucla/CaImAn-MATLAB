@@ -36,38 +36,39 @@ if nargin < 4 || isempty(centers)
 end
     
 
-min_distance_point_selection=2;
+min_distance_point_selection = 3.^2; 
+
 x=1;
 [K,T] = size(C);
 newcenters=[centers];
 % ident_point=[0,0];
-fig = figure;
-imagesc(img,[min(img(:)),max(img(:))]);
-    axis equal; axis tight; hold all;
-    scatter(newcenters(:,2),newcenters(:,1),'mo'); hold on;
-    title('Center of ROIs found from initialization algorithm');
-    xlabel({'Press left click to add new component, right click to remove existing component'; 'Press enter to exit'},'fontweight','bold');
-    drawnow;
-    cmap = colormap;
-    CC = cell(size(A,2),1);
+fig = figure; ax=axes(fig); 
+imagesc(ax, img,[min(img(:)),max(img(:))]);
+axis(ax, 'equal');
+axis(ax, 'tight');
+hold(ax, 'all');
+scatter(ax, newcenters(:,2),newcenters(:,1),'mo'); hold(ax, 'on');
+title(ax, 'Center of ROIs found from initialization algorithm');
+xlabel(ax, {'Press left click to add new component, right click to remove existing component'; 'Press enter to exit'},'fontweight','bold');
+drawnow;
+cmap = colormap;
+CC = cell(size(A,2),1);
 for i = 1:size(A,2)
     a_srt = sort(A(:,i),'descend');
     ff = find(cumsum(a_srt.^2) >= cont_threshold*sum(a_srt.^2),1,'first');
-    CC{i} = contour(reshape(A(:,i),options.d1,options.d2),[0,0]+a_srt(ff),'Linecolor',[1,0,1]/2);
-    CC{i}(CC{i}<1) = NaN;
-    CC{i}(:,CC{i}(1,:)>options.d2) = NaN;
-    CC{i}(:,CC{i}(2,:)>options.d1) = NaN;
-    hold on;
+    CC{i} = contour(ax, reshape(A(:,i),options.d1,options.d2),[0,0]+a_srt(ff),'Linecolor',[1,0,1]/2);
+    hold(ax, 'on');
 end
     
 while ~isempty(x)    
 %     scatter(ident_point(1),ident_point(2),'go');
+    figure(fig);
     [x,y,button]=ginput(1);
-    disp(button); hold on;
+    hold(ax, 'on');
     if ~isempty(x)
         pixel=round([x y]);
         if button==1
-            disp(['Adding pixel at:' num2str(fliplr(pixel))])
+            disp(['Adding pixel at:' num2str(fliplr(pixel))]);
             newcenters=[newcenters; fliplr(pixel)];
             int_x = round(newcenters(end,1)) + (-sx:sx);
             if int_x(1)<1
@@ -98,12 +99,9 @@ while ~isempty(x)
             C(K,:) = ctemp*norm(atemp);
             new_center = com(A(:,end),options.d1,options.d2);
             newcenters(end,:) = new_center;
-            scatter(new_center(2),new_center(1),'mo'); hold on; 
-            CC{K} = contour(reshape(A(:,end),options.d1,options.d2),[0,0]+a_srt(ff),'Linecolor',[1,0,1]/2);
-            CC{K}(CC{K}<1) = NaN;
-            CC{K}(:,CC{K}(1,:)>options.d2) = NaN;
-            CC{K}(:,CC{K}(2,:)>options.d1) = NaN;
-            hold on;
+            scatter(ax, new_center(2),new_center(1),'mo'); hold(ax, 'on'); 
+            CC{K} = contour(ax, reshape(A(:,end),options.d1,options.d2),[0,0]+a_srt(ff),'Linecolor',[1,0,1]/2);
+            hold(ax, 'on');
             colormap(fig,cmap);
             
             drawnow;
@@ -114,29 +112,39 @@ while ~isempty(x)
 %             end
             
         elseif button==3
-            [m,id]=min(sum(bsxfun(@minus,newcenters,[y,x]).^2,2));            
+            [m,id]=min(sum(bsxfun(@minus,newcenters,[y,x]).^2,2)); 
             ident_point=[newcenters(id,2),newcenters(id,1)];
             if m<=min_distance_point_selection
-                disp(['Removing point:' num2str(ident_point)]) 
+                disp(['Removing point:' num2str(ident_point)]) ;
                 newcenters(id,:)=[]; 
                 A(:,id) = [];
                 C(id,:) = [];
                 CC(id) = [];
                 K = K - 1;
                 % replot after removing
-                clf;
-                imagesc(img,[min(img(:)),max(img(:))]);
-                    axis equal; axis tight; hold all;
-                    scatter(newcenters(:,2),newcenters(:,1),'mo'); hold on;
-                    title('Center of ROIs found from initialization algorithm');
-                    xlabel({'Press left click to add new component, right click to remove existing component'; 'Press enter to exit'},'fontweight','bold');
-                    drawnow;
-                    cmap = colormap;
+                cla(ax);
+                imagesc(ax, img,[min(img(:)),max(img(:))]);
+                hold(ax, 'all');
+                scatter(ax, newcenters(:,2),newcenters(:,1),'mo'); hold(ax, 'on');
+                title(ax, 'Center of ROIs found from initialization algorithm');
+                xlabel(ax, {'Press left click to add new component, right click to remove existing component'; 'Press enter to exit'},'fontweight','bold');
+                drawnow;
+                cmap = colormap;
                     
                 for i = 1:K
                     cont = CC{i}; %medfilt1(CC{i}')';
                     if size(cont,2) > 1
-                        plot(cont(1,2:end-1),cont(2,2:end-1),'Color',[1,0,1]/2); hold on;
+                        vertices_start = 2;
+                        vertices_end = cont(2,1)+1;
+                        
+                        plot(ax, cont(1,vertices_start:(vertices_end)),cont(2,vertices_start:vertices_end),'Color',[1,0,1]/2); hold(ax,'on');
+                        
+                        while vertices_end < size(cont,2)
+                            vertices_start = vertices_end+2;
+                            vertices_end = vertices_end + cont(2,vertices_end+1)+1;
+
+                            plot(ax, cont(1,vertices_start:(vertices_end)),cont(2,vertices_start:vertices_end),'Color',[1,0,1]/2); hold(ax,'on');
+                        end
                     end
                     %a_srt = sort(A(:,i),'descend');
                     %ff = find(cumsum(a_srt.^2) >= cont_threshold*sum(a_srt.^2),1,'first');
